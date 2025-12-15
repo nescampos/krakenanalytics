@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import OrderBookRow from './OrderBookRow';
-import { OrderBookData } from '@/types/orderbook';
+import { OrderBookData, OrderBookEntry } from '@/types/orderbook';
 import { generateMockOrderBook } from '@/lib/kraken-api';
 
 interface OrderBookProps {
@@ -16,7 +16,7 @@ const OrderBook: React.FC<OrderBookProps> = ({ pair }) => {
   // Initialize with mock data
   useEffect(() => {
     const mockData = generateMockOrderBook(pair);
-    
+
     // Convert Kraken format to our OrderBookData
     const formattedData: OrderBookData = {
       bids: mockData.bids.map(([price, volume]: [number, number]) => ({
@@ -43,6 +43,7 @@ const OrderBook: React.FC<OrderBookProps> = ({ pair }) => {
     setOrderBook(formattedData);
   }, [pair]);
 
+  // Render loading state or the full order book
   if (!orderBook) {
     return (
       <div className="flex justify-center items-center h-96">
@@ -50,6 +51,10 @@ const OrderBook: React.FC<OrderBookProps> = ({ pair }) => {
       </div>
     );
   }
+
+  // Calculate sorted asks and bids
+  const sortedAsks = [...orderBook.asks].sort((a, b) => b.price - a.price);
+  const sortedBids = [...orderBook.bids].sort((a, b) => b.price - a.price);
 
   return (
     <div className="flex flex-col h-[calc(100vh-200px)]">
@@ -61,16 +66,14 @@ const OrderBook: React.FC<OrderBookProps> = ({ pair }) => {
           <span className="text-right">Total</span>
         </div>
         <div className="divide-y divide-gray-200 dark:divide-zinc-700">
-          {orderBook.asks
-            .sort((a, b) => b.price - a.price) // Sort highest price first
-            .map((ask, index) => (
-              <OrderBookRow
-                key={`ask-${index}`}
-                entry={ask}
-                type="ask"
-                maxVolume={maxVolume}
-              />
-            ))}
+          {sortedAsks.map((ask, index) => (
+            <OrderBookRow
+              key={`ask-${ask.price}-${ask.volume}`}
+              entry={ask}
+              type="ask"
+              maxVolume={maxVolume}
+            />
+          ))}
         </div>
       </div>
 
@@ -78,7 +81,7 @@ const OrderBook: React.FC<OrderBookProps> = ({ pair }) => {
       <div className="bg-gray-100 dark:bg-zinc-800 py-2 text-center text-sm font-semibold border-l border-r border-gray-200 dark:border-zinc-700">
         {orderBook.asks.length > 0 && orderBook.bids.length > 0 ? (
           <span>
-            Spread: {(orderBook.asks[0].price - orderBook.bids[0].price).toFixed(2)} (
+            Spread: {(orderBook.asks[0].price - orderBook.bids[0].price).toFixed(5)} (
             {(((orderBook.asks[0].price - orderBook.bids[0].price) / orderBook.bids[0].price) * 100).toFixed(2)}%)
           </span>
         ) : (
@@ -94,16 +97,14 @@ const OrderBook: React.FC<OrderBookProps> = ({ pair }) => {
           <span className="text-right">Total</span>
         </div>
         <div className="divide-y divide-gray-200 dark:divide-zinc-700">
-          {orderBook.bids
-            .sort((a, b) => b.price - a.price) // Sort highest price first
-            .map((bid, index) => (
-              <OrderBookRow
-                key={`bid-${index}`}
-                entry={bid}
-                type="bid"
-                maxVolume={maxVolume}
-              />
-            ))}
+          {sortedBids.map((bid, index) => (
+            <OrderBookRow
+              key={`bid-${bid.price}-${bid.volume}`}
+              entry={bid}
+              type="bid"
+              maxVolume={maxVolume}
+            />
+          ))}
         </div>
       </div>
     </div>
