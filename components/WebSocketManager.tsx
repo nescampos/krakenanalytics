@@ -34,24 +34,55 @@ const WebSocketManager: React.FC<WebSocketManagerProps> = ({ pair, onConnectionC
   const connect = () => {
     setConnectionStatus('connecting');
 
-    // In a real implementation, we would connect to the actual Kraken WebSocket
-    // For this mock, we'll simulate the connection
+    // Create actual WebSocket connection using the environment variable
+    const ws = new WebSocket(krakenWebSocketUrl);
+    wsRef.current = ws;
 
-    // Simulated connection
-    setTimeout(() => {
+    ws.onopen = () => {
+      console.log('Connected to Kraken WebSocket');
       setConnectionStatus('connected');
       onConnectionChange(true);
       setReconnectAttempts(0);
 
-      // Simulate periodic updates
-      const interval = setInterval(() => {
-        // Simulate receiving a new orderbook update
-        setLastMessage(`Received update at ${new Date().toLocaleTimeString()}`);
-      }, 1000);
+      // Subscribe to order book after connection is established
+      const subscribeMsg: SubscribeParams = {
+        event: 'subscribe',
+        pair: [pair],
+        subscription: {
+          name: 'book',
+          depth: 25 // Top 25 levels
+        }
+      };
 
-      // Clear interval on disconnect
-      return () => clearInterval(interval);
-    }, 500); // Simulate connection delay
+      ws.send(JSON.stringify(subscribeMsg));
+    };
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      setLastMessage(`Received: ${new Date().toLocaleTimeString()}`);
+
+      // In a real implementation, process the order book data here
+      if (data && Array.isArray(data) && data.length > 2) {
+        // This is an order book update message
+        console.log('Order book update:', data);
+      } else if (data && data.event === 'subscriptionStatus') {
+        console.log('Subscription status:', data);
+      } else if (data && data.event === 'heartbeat') {
+        // Ignore heartbeat messages
+      }
+    };
+
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      setConnectionStatus('disconnected');
+      onConnectionChange(false);
+    };
+
+    ws.onclose = () => {
+      console.log('Disconnected from Kraken WebSocket');
+      setConnectionStatus('disconnected');
+      onConnectionChange(false);
+    };
   };
 
   // Disconnect from WebSocket
@@ -85,7 +116,9 @@ const WebSocketManager: React.FC<WebSocketManagerProps> = ({ pair, onConnectionC
 
     // Clean up on unmount
     return () => {
-      disconnect();
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
     };
   }, [pair]);
 

@@ -1,7 +1,7 @@
 // Mock API utility for Kraken WebSocket connection
 // In a real implementation, this would connect to Kraken's actual WebSocket API
 
-export const krakenWebSocketUrl = 'wss://ws.kraken.com';
+export const krakenWebSocketUrl = process.env.NEXT_PUBLIC_KRAKEN_WS_URL || 'wss://ws.kraken.com/v2';
 
 export interface SubscribeParams {
   event: 'subscribe' | 'unsubscribe';
