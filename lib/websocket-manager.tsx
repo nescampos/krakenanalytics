@@ -97,6 +97,7 @@ const connectWebSocket = () => {
 // Function to close WebSocket connection
 const closeWebSocket = () => {
   shouldReconnect = false;
+  console.log("Closing WebSocket connection");
   
   if (globalWebSocket) {
     globalWebSocket.close(1000, "App closing");

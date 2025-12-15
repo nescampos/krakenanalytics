@@ -23,7 +23,7 @@ const MarketSelector: React.FC<MarketSelectorProps> = ({ selectedPair, onSelectP
 
   return (
     <div className="mb-6">
-      <h3 className="text-lg font-semibold mb-3">Select Trading Pair</h3>
+      {/* <h3 className="text-lg font-semibold mb-3">Select Trading Pair</h3>
       <div className="grid grid-cols-2 gap-2 max-h-96 overflow-y-auto">
         {tradingPairs.map((pair) => (
           <button
@@ -38,7 +38,7 @@ const MarketSelector: React.FC<MarketSelectorProps> = ({ selectedPair, onSelectP
             {pair}
           </button>
         ))}
-      </div>
+      </div> */}
     </div>
   );
 };

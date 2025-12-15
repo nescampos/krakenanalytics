@@ -29,7 +29,7 @@ export const TickerProvider: React.FC<TickerProviderProps> = ({ children, pair }
 
     // Cleanup subscription when component unmounts
     return () => {
-      unsubscribeFromPair(pair);
+      //unsubscribeFromPair(pair);
     };
   }, [pair]);
 
