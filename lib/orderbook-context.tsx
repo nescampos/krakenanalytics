@@ -2,7 +2,7 @@
 'use client';
 
 import React, { createContext, useContext, ReactNode, useEffect, useState } from 'react';
-import { useWebSocket, subscribeToPair, unsubscribeFromPair } from '@/lib/websocket-manager';
+import { useWebSocket, subscribeToTicker, unsubscribeFromTicker } from '@/lib/websocket-manager';
 import { TickerData } from '@/types/orderbook';
 
 interface TickerContextType {
@@ -24,12 +24,12 @@ export const TickerProvider: React.FC<TickerProviderProps> = ({ children, pair }
   const [pairTickerData, setPairTickerData] = useState<TickerData | null>(null);
 
   useEffect(() => {
-    // Subscribe to the pair when component mounts
-    subscribeToPair(pair);
+    // Subscribe to the ticker for the pair when component mounts
+    subscribeToTicker(pair);
 
-    // Cleanup subscription when component unmounts
+    // Cleanup ticker subscription when component unmounts
     return () => {
-      //unsubscribeFromPair(pair);
+      unsubscribeFromTicker(pair);
     };
   }, [pair]);
 

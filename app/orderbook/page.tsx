@@ -6,6 +6,7 @@ import OrderBook from '@/components/OrderBook';
 import MarketSelector from '@/components/MarketSelector';
 import OrderBookHeader from '@/components/OrderBookHeader';
 import { useTicker, TickerProvider } from '@/lib/orderbook-context';
+import { OrderBookProvider } from '@/lib/orderbook-data-context';
 
 
 const OrderBookContent = ({ pair }: { pair: string }) => {
@@ -16,7 +17,9 @@ const OrderBookContent = ({ pair }: { pair: string }) => {
   return (
     <>
       <div className="w-full lg:w-3/4 p-4 border-r border-gray-200 dark:border-zinc-700">
-        <OrderBook pair={pair} />
+        <OrderBookProvider pair={pair}>
+          <OrderBook pair={pair} />
+        </OrderBookProvider>
       </div>
 
       <div className="w-full lg:w-1/4 p-4 bg-gray-50 dark:bg-zinc-800">

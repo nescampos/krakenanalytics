@@ -31,6 +31,18 @@ export interface TickerData {
   change_pct: number;
 }
 
+export interface WebSocketOrderBookEntry {
+  price: number;
+  qty: number;
+}
+
+export interface WebSocketOrderBookData {
+  symbol: string;
+  bids: WebSocketOrderBookEntry[];
+  asks: WebSocketOrderBookEntry[];
+  checksum: number;
+}
+
 export interface KrakenWebSocketMessage {
   channelID?: number;
   channelName?: string;
