@@ -6,28 +6,128 @@ import OrderBook from '@/components/OrderBook';
 import MarketSelector from '@/components/MarketSelector';
 import OrderBookHeader from '@/components/OrderBookHeader';
 import TradeHistoryTable from '@/components/TradeHistoryTable';
+import OHLCChart from '@/components/OHLCChart';
 import { useTicker, TickerProvider } from '@/lib/orderbook-context';
 import { OrderBookProvider } from '@/lib/orderbook-data-context';
 import { TradeDataProvider } from '@/lib/trade-data-context';
+import { useWebSocket, subscribeToOHLC, unsubscribeFromOHLC, addOHLCListener } from '@/lib/websocket-manager';
+import { OHLCData } from '@/lib/websocket-manager';
 
 
 const OrderBookContent = ({ pair }: { pair: string }) => {
   const { connectionStatus, error, tickerData } = useTicker();
+  const { ohlcData } = useWebSocket();
+  const [selectedInterval, setSelectedInterval] = useState<number>(5);
+  const [isLoadingOHLC, setIsLoadingOHLC] = useState<boolean>(true);
+  const [ohlcError, setOHLCError] = useState<string | null>(null);
 
   const isConnected = connectionStatus === 'connected';
+  const currentOHLCData = ohlcData[pair] || [];
+
+  // Setup OHLC subscription when component mounts or pair changes
+  useEffect(() => {
+    let unsubscribeOHLC: (() => void) | null = null;
+
+    const initializeSubscription = () => {
+      try {
+        setIsLoadingOHLC(true);
+        subscribeToOHLC(pair, selectedInterval);
+
+        unsubscribeOHLC = addOHLCListener(({ symbol, data, isSnapshot }) => {
+          if (symbol === pair) {
+            setIsLoadingOHLC(false);
+            setOHLCError(null);
+          }
+        });
+      } catch (err) {
+        console.error('Error subscribing to OHLC data:', err);
+        setIsLoadingOHLC(false);
+        setOHLCError('Failed to load OHLC data');
+      }
+    };
+
+    initializeSubscription();
+
+    // Cleanup function
+    return () => {
+      if (unsubscribeOHLC) unsubscribeOHLC();
+      unsubscribeFromOHLC(pair, selectedInterval);
+    };
+  }, [pair]); // Only subscribe when the pair changes, not interval
+
 
   return (
     <>
       <div className="w-full lg:w-3/4 p-4 border-r border-gray-200 dark:border-zinc-700">
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold mb-2">Chart</h3>
 
-      <TradeDataProvider pair={pair}>
+          <div className="flex space-x-2 mb-4">
+            {[1, 5, 15, 30, 60, 240,1440, 10080, 21600].map((interval) => (
+              <button
+                key={interval}
+                onClick={() => {
+                  if (pair) {
+                    // Unsubscribe from the current interval
+                    unsubscribeFromOHLC(pair, selectedInterval);
+
+                    // Update the selected interval
+                    setSelectedInterval(interval);
+
+                    // Subscribe to the new interval after a small delay
+                    setTimeout(() => {
+                      try {
+                        setIsLoadingOHLC(true);
+                        subscribeToOHLC(pair, interval);
+                      } catch (err) {
+                        console.error('Error resubscribing to OHLC data:', err);
+                        setIsLoadingOHLC(false);
+                        setOHLCError('Failed to resubscribe to OHLC data');
+                      }
+                    }, 100); // Small delay to ensure unsubscribe completes
+                  }
+                }}
+                className={`px-3 py-1 rounded text-sm ${
+                  selectedInterval === interval
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-200 dark:bg-zinc-700 text-gray-800 dark:text-white'
+                }`}
+              >
+                {interval < 60 ? `${interval}m` : interval === 1440 ? '1d' : interval === 10080 ? '1w' : interval === 21600 ? '15d' : `${interval / 60}h`}
+              </button>
+            ))}
+          </div>
+
+          {isLoadingOHLC ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+          ) : ohlcError ? (
+            <div className="text-red-500 text-center py-4">{ohlcError}</div>
+          ) : currentOHLCData.length > 0 ? (
+            <OHLCChart
+              data={currentOHLCData}
+              title={`Chart - ${pair} (${selectedInterval}m)`}
+            />
+          ) : (
+            <div className="border-2 border-dashed border-gray-300 dark:border-zinc-600 rounded-lg p-8 text-center">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                No OHLC data available
+              </h3>
+              <p className="text-gray-500 dark:text-zinc-400">
+                Waiting for OHLC data from Kraken API
+              </p>
+            </div>
+          )}
+        </div>
+
+        <TradeDataProvider pair={pair}>
           <TradeHistoryTable pair={pair} />
         </TradeDataProvider>
 
         <OrderBookProvider pair={pair}>
           <OrderBook pair={pair} />
         </OrderBookProvider>
-
       </div>
 
       <div className="w-full lg:w-1/4 p-4 bg-gray-50 dark:bg-zinc-800">

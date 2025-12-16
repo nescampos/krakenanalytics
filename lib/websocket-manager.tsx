@@ -31,6 +31,20 @@ interface OrderBookData {
   checksum: number;
 }
 
+export interface OHLCData {
+  symbol: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  trades: number;
+  volume: number;
+  vwap: number;
+  interval_begin: string;
+  interval: number;
+  timestamp: string;
+}
+
 // Define the internal format for maintaining book state
 interface InternalOrderBookState {
   bids: Map<number, OrderBookEntry>;
@@ -47,6 +61,7 @@ interface WebSocketContextType {
   tickerData: Record<string, TickerData>; // Store data for all pairs
   orderBookData: Record<string, OrderBookData>; // Store order book data for all pairs
   tradeData: Record<string, TradeData[]>; // Store trade history for all pairs
+  ohlcData: Record<string, OHLCData[]>; // Store OHLC data for all pairs
 }
 
 const WebSocketContext = createContext<WebSocketContextType | undefined>(undefined);
@@ -61,9 +76,11 @@ let shouldReconnect = true;
 const subscribedTickerPairs = new Set<string>();
 const subscribedBookPairs = new Set<string>();
 const subscribedTradePairs = new Set<string>(); // Track trade subscriptions
+const subscribedOHLCPairs = new Set<string>(); // Track OHLC subscriptions
 const tickerListeners = new Set<(data: { symbol: string; data: TickerData }) => void>();
 const bookListeners = new Set<(data: { symbol: string; data: OrderBookData }) => void>();
 const tradeListeners = new Set<(data: { symbol: string; data: TradeData[] }) => void>(); // Trade listeners
+const ohlcListeners = new Set<(data: { symbol: string; data: OHLCData[]; isSnapshot: boolean }) => void>(); // OHLC listeners
 
 const krakenWebSocketUrl = process.env.NEXT_PUBLIC_KRAKEN_WS_URL || 'wss://ws.kraken.com/v2';
 
@@ -105,6 +122,18 @@ const connectWebSocket = () => {
             channel: "trade",
             symbol: Array.from(subscribedTradePairs),
             snapshot: true
+          }
+        });
+      }
+
+      if (subscribedOHLCPairs.size > 0) {
+        // For OHLC, we'll subscribe with a default interval of 5 minutes
+        subscriptions.push({
+          method: "subscribe",
+          params: {
+            channel: "ohlc",
+            symbol: Array.from(subscribedOHLCPairs),
+            interval: 5
           }
         });
       }
@@ -222,6 +251,22 @@ const connectWebSocket = () => {
               } else {
                 // For updates, append new trades to the existing history
                 listener({ symbol: pair, data: message.data, isSnapshot: false }); // Append new trades
+              }
+            });
+          }
+        } else if (message.channel === 'ohlc' && Array.isArray(message.data)) {
+          // Process OHLC data
+          const pair = message.data[0]?.symbol; // Get the pair from the first OHLC data item
+
+          if (pair) {
+            // Notify all OHLC listeners about the update
+            ohlcListeners.forEach(listener => {
+              // If it's a snapshot, replace entire history; otherwise, append/update OHLC data
+              if (message.type === 'snapshot') {
+                listener({ symbol: pair, data: message.data, isSnapshot: true });
+              } else {
+                // For updates, add or update the specific OHLC data point
+                listener({ symbol: pair, data: message.data, isSnapshot: false });
               }
             });
           }
@@ -404,12 +449,65 @@ export const addTradeListener = (callback: (data: { symbol: string; data: TradeD
   };
 };
 
+// Function to subscribe to OHLC data for a pair with specified interval
+export const subscribeToOHLC = (pair: string, interval: number = 5) => {
+  subscribedOHLCPairs.add(pair);
+
+  if (globalWebSocket?.readyState === WebSocket.OPEN) {
+    const subscribeMessage = {
+      method: "subscribe",
+      params: {
+        channel: "ohlc",
+        symbol: [pair],
+        interval: interval
+      }
+    };
+    globalWebSocket.send(JSON.stringify(subscribeMessage));
+  } else if (globalWebSocket?.readyState === WebSocket.CONNECTING) {
+    // Will subscribe when connection opens
+  } else {
+    // Connect if not already connected
+    connectWebSocket();
+  }
+};
+
+// Function to unsubscribe from OHLC data for a pair with specified interval
+export const unsubscribeFromOHLC = (pair: string, interval?: number) => {
+  subscribedOHLCPairs.delete(pair);
+
+  if (globalWebSocket?.readyState === WebSocket.OPEN) {
+    const unsubscribeMessage: any = {
+      method: "unsubscribe",
+      params: {
+        channel: "ohlc",
+        symbol: [pair]
+      }
+    };
+
+    // Include interval in unsubscribe message if specified
+    if (interval !== undefined) {
+      unsubscribeMessage.params.interval = interval;
+    }
+
+    globalWebSocket.send(JSON.stringify(unsubscribeMessage));
+  }
+};
+
+// Function to add listener for OHLC data
+export const addOHLCListener = (callback: (data: { symbol: string; data: OHLCData[]; isSnapshot: boolean }) => void) => {
+  ohlcListeners.add(callback);
+  return () => {
+    ohlcListeners.delete(callback);
+  };
+};
+
 export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }) => {
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
   const [error, setError] = useState<string | null>(null);
   const [tickerData, setTickerData] = useState<Record<string, TickerData>>({});
   const [orderBookData, setOrderBookData] = useState<Record<string, OrderBookData>>({});
   const [tradeData, setTradeData] = useState<Record<string, TradeData[]>>({});
+  const [ohlcData, setOHLCData] = useState<Record<string, OHLCData[]>>({});
 
   useEffect(() => {
     // Initialize connection
@@ -466,6 +564,48 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
       });
     });
 
+    // Set up listener for OHLC data
+    const ohlcUnsubscribe = addOHLCListener(({ symbol, data, isSnapshot }) => {
+      setOHLCData(prev => {
+        // Get existing OHLC data for this symbol
+        const existingOHLC = prev[symbol] || [];
+
+        // If it's a snapshot, replace the data; otherwise, append/update OHLC data
+        let newOHLC: OHLCData[];
+        if (isSnapshot) {
+          // This is a snapshot, replace the data
+          newOHLC = [...data];
+        } else {
+          // For updates, we need to either update existing OHLC points or add new ones
+          // This creates a new array with updated OHLC data
+          const updatedOHLC = [...existingOHLC];
+
+          data.forEach(newOHLCItem => {
+            // Check if there's already an OHLC item with the same timestamp
+            const existingIndex = updatedOHLC.findIndex(
+              item => item.timestamp === newOHLCItem.timestamp && item.interval === newOHLCItem.interval
+            );
+
+            if (existingIndex !== -1) {
+              // Update existing OHLC item
+              updatedOHLC[existingIndex] = newOHLCItem;
+            } else {
+              // Add new OHLC item
+              updatedOHLC.push(newOHLCItem);
+            }
+          });
+
+          // Sort by timestamp (oldest first for time-series charts)
+          newOHLC = updatedOHLC.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+        }
+
+        return {
+          ...prev,
+          [symbol]: newOHLC
+        };
+      });
+    });
+
     // Update connection status based on WebSocket state
     const connectionInterval = setInterval(() => {
       if (globalWebSocket) {
@@ -485,6 +625,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
       tickerUnsubscribe();
       bookUnsubscribe();
       tradeUnsubscribe();
+      ohlcUnsubscribe();
       clearInterval(connectionInterval);
     };
   }, []);
@@ -523,7 +664,8 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     error,
     tickerData,
     orderBookData,
-    tradeData
+    tradeData,
+    ohlcData
   };
 
   return (
