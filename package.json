@@ -1,5 +1,6 @@
 {
-  "name": "kyro",
+  "name": "kraken-analytics-app",
+  "description": "Kraken Analytics Visualizer with real-time order book and pair comparison features for cryptocurrency trading pairs",
   "version": "0.1.0",
   "private": true,
   "scripts": {

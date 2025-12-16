@@ -9,7 +9,6 @@ const Navigation: React.FC = () => {
   
   const navItems = [
     { name: 'Dashboard', path: '/' },
-    { name: 'Order Book', path: '/orderbook' },
     { name: 'Comparison', path: '/comparison' },
   ];
 
@@ -18,8 +17,8 @@ const Navigation: React.FC = () => {
       <div className="container mx-auto flex flex-col sm:flex-row justify-between items-center">
         <div className="mb-4 sm:mb-0">
           <Link href="/">
-            <h1 className="text-xl font-bold">Kraken Order Book Visualizer</h1>
-            <p className="text-xs opacity-80">Real-time trading data with time travel capabilities</p>
+            <h1 className="text-xl font-bold">Kraken Analytics Visualizer</h1>
+            <p className="text-xs opacity-80">Real-time trading data visualization and analysis tools for cryptocurrency pairs on Kraken</p>
           </Link>
         </div>
         

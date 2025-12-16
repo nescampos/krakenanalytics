@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Kraken Order Book Visualizer",
-  description: "Real-time trading data with time travel capabilities",
+  title: "Kraken Analytics Visualizer",
+  description: "Real-time trading data visualization and analysis tools for cryptocurrency pairs on Kraken",
 };
 
 export default function RootLayout({
