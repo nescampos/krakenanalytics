@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Kraken Analytics Visualizer
 
-## Getting Started
+A real-time cryptocurrency trading data visualization application that connects to the Kraken exchange's WebSocket API to display live order book information, trading pair comparisons, and historical data analysis.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **Real-time Order Book Visualization**: Displays live bid/ask orders showing current market depth
+- **Multi-Pair Support**: Allows users to select from multiple trading pairs (e.g., ETH/USDT)
+- **Trading Pair Comparison**: Compare metrics between two different trading pairs side by side
+- **OHLC Chart Visualization**: Interactive charts with Open, High, Low, and Close data for various time intervals
+- **Historical Data Exploration**: Time travel feature to view historical order book snapshots
+- **Comprehensive Trading Pair List**: Shows all available trading pairs with search and pagination
+- **Trade History Display**: Shows real-time trade execution data
+- **Ticker Information**: Displays key metrics like last price, bid/ask, 24h change, volume, etc.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Tech Stack
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Framework**: Next.js 16
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **WebSocket**: Real-time connection to Kraken API
+- **Charts**: Custom Canvas-based OHLC visualization
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Prerequisites
 
-## Learn More
+- Node.js 18 or higher
+- npm, yarn, pnpm, or bun
 
-To learn more about Next.js, take a look at the following resources:
+## Installation
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Clone the repository:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-## Deploy on Vercel
+3. Create a `.env` file in the root directory and add the Kraken API URLs:
+   ```
+   NEXT_PUBLIC_KRAKEN_API_PAIRS=https://api.kraken.com/0/public/AssetPairs
+   NEXT_PUBLIC_KRAKEN_WS_URL=wss://ws.kraken.com/v2
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Running the Application
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+2. Open [http://localhost:3000](http://localhost:3000) in your browser
+
+## Usage
+
+### Dashboard
+- The main dashboard displays available trading pairs with search and pagination
+
+### Live Order Book
+- Select a trading pair from the list
+- View real-time order book data with bids and asks
+- See OHLC charts with interval selection
+- Access detailed trading pair information in the sidebar
+
+### Trading Pair Comparison
+- Select two different trading pairs to compare
+- View side-by-side ticker data
+- Analyze comparison metrics including price differences, volume differences, and spread analysis
+
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+
+Created by [Néstor Campos](https://www.linkedin.com/in/nescampos/)
