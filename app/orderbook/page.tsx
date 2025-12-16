@@ -5,8 +5,10 @@ import { useSearchParams } from 'next/navigation';
 import OrderBook from '@/components/OrderBook';
 import MarketSelector from '@/components/MarketSelector';
 import OrderBookHeader from '@/components/OrderBookHeader';
+import TradeHistoryTable from '@/components/TradeHistoryTable';
 import { useTicker, TickerProvider } from '@/lib/orderbook-context';
 import { OrderBookProvider } from '@/lib/orderbook-data-context';
+import { TradeDataProvider } from '@/lib/trade-data-context';
 
 
 const OrderBookContent = ({ pair }: { pair: string }) => {
@@ -20,6 +22,11 @@ const OrderBookContent = ({ pair }: { pair: string }) => {
         <OrderBookProvider pair={pair}>
           <OrderBook pair={pair} />
         </OrderBookProvider>
+
+        {/* Trade History Table */}
+        <TradeDataProvider pair={pair}>
+          <TradeHistoryTable pair={pair} />
+        </TradeDataProvider>
       </div>
 
       <div className="w-full lg:w-1/4 p-4 bg-gray-50 dark:bg-zinc-800">

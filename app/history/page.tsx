@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import TimeTravelControls from '@/components/TimeTravelControls';
 import OrderBook from '@/components/OrderBook';
 import MarketSelector from '@/components/MarketSelector';
@@ -15,7 +15,7 @@ const HistoryPage = () => {
 
   const handleTimeTravel = (timeParam: string) => {
     setIsLoading(true);
-    
+
     // Simulate loading time
     setTimeout(() => {
       const timestamps = historicalDataService.getAvailableTimestamps(selectedPair);

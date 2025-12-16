@@ -2,6 +2,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { TradeData } from '@/types/orderbook';
 
 interface TickerData {
   symbol: string;
@@ -45,6 +46,7 @@ interface WebSocketContextType {
   error: string | null;
   tickerData: Record<string, TickerData>; // Store data for all pairs
   orderBookData: Record<string, OrderBookData>; // Store order book data for all pairs
+  tradeData: Record<string, TradeData[]>; // Store trade history for all pairs
 }
 
 const WebSocketContext = createContext<WebSocketContextType | undefined>(undefined);
@@ -58,8 +60,10 @@ let globalReconnectTimeout: NodeJS.Timeout | null = null;
 let shouldReconnect = true;
 const subscribedTickerPairs = new Set<string>();
 const subscribedBookPairs = new Set<string>();
+const subscribedTradePairs = new Set<string>(); // Track trade subscriptions
 const tickerListeners = new Set<(data: { symbol: string; data: TickerData }) => void>();
 const bookListeners = new Set<(data: { symbol: string; data: OrderBookData }) => void>();
+const tradeListeners = new Set<(data: { symbol: string; data: TradeData[] }) => void>(); // Trade listeners
 
 // Function to connect to WebSocket
 const connectWebSocket = () => {
@@ -88,6 +92,17 @@ const connectWebSocket = () => {
           params: {
             channel: "book",
             symbol: Array.from(subscribedBookPairs)
+          }
+        });
+      }
+
+      if (subscribedTradePairs.size > 0) {
+        subscriptions.push({
+          method: "subscribe",
+          params: {
+            channel: "trade",
+            symbol: Array.from(subscribedTradePairs),
+            snapshot: true
           }
         });
       }
@@ -192,6 +207,22 @@ const connectWebSocket = () => {
               listener({ symbol: pair, data: orderBookData });
             });
           });
+        } else if (message.channel === 'trade' && Array.isArray(message.data)) {
+          // Process trade data
+          const pair = message.data[0]?.symbol; // Get the pair from the first trade
+
+          if (pair) {
+            // Notify all trade listeners about the update
+            tradeListeners.forEach(listener => {
+              // If it's a snapshot, replace entire history; otherwise, append to history
+              if (message.type === 'snapshot') {
+                listener({ symbol: pair, data: message.data, isSnapshot: true }); // Replace existing data
+              } else {
+                // For updates, append new trades to the existing history
+                listener({ symbol: pair, data: message.data, isSnapshot: false }); // Append new trades
+              }
+            });
+          }
         }
       } catch (parseError) {
         console.error('Error parsing WebSocket message:', parseError);
@@ -309,6 +340,44 @@ export const unsubscribeFromBook = (pair: string) => {
   internalBookStates.delete(pair);
 };
 
+// Function to subscribe to trade data for a pair
+export const subscribeToTrade = (pair: string) => {
+  subscribedTradePairs.add(pair);
+
+  if (globalWebSocket?.readyState === WebSocket.OPEN) {
+    const subscribeMessage = {
+      method: "subscribe",
+      params: {
+        channel: "trade",
+        symbol: [pair],
+        snapshot: true
+      }
+    };
+    globalWebSocket.send(JSON.stringify(subscribeMessage));
+  } else if (globalWebSocket?.readyState === WebSocket.CONNECTING) {
+    // Will subscribe when connection opens
+  } else {
+    // Connect if not already connected
+    connectWebSocket();
+  }
+};
+
+// Function to unsubscribe from trade data for a pair
+export const unsubscribeFromTrade = (pair: string) => {
+  subscribedTradePairs.delete(pair);
+
+  if (globalWebSocket?.readyState === WebSocket.OPEN) {
+    const unsubscribeMessage = {
+      method: "unsubscribe",
+      params: {
+        channel: "trade",
+        symbol: [pair]
+      }
+    };
+    globalWebSocket.send(JSON.stringify(unsubscribeMessage));
+  }
+};
+
 // Function to add listener for ticker data
 export const addTickerListener = (callback: (data: { symbol: string; data: TickerData }) => void) => {
   tickerListeners.add(callback);
@@ -325,11 +394,20 @@ export const addBookListener = (callback: (data: { symbol: string; data: OrderBo
   };
 };
 
+// Function to add listener for trade data
+export const addTradeListener = (callback: (data: { symbol: string; data: TradeData[]; isSnapshot: boolean }) => void) => {
+  tradeListeners.add(callback);
+  return () => {
+    tradeListeners.delete(callback);
+  };
+};
+
 export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }) => {
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
   const [error, setError] = useState<string | null>(null);
   const [tickerData, setTickerData] = useState<Record<string, TickerData>>({});
   const [orderBookData, setOrderBookData] = useState<Record<string, OrderBookData>>({});
+  const [tradeData, setTradeData] = useState<Record<string, TradeData[]>>({});
 
   useEffect(() => {
     // Initialize connection
@@ -352,6 +430,40 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
       }));
     });
 
+    // Set up listener for trade data
+    const tradeUnsubscribe = addTradeListener(({ symbol, data, isSnapshot }) => {
+      setTradeData(prev => {
+        // Get existing trades for this symbol
+        const existingTrades = prev[symbol] || [];
+
+        // If it's a snapshot, replace the data; otherwise, append to existing data
+        let newTrades: TradeData[];
+        if (isSnapshot) {
+          // This is a snapshot, replace the data
+          newTrades = [...data];
+        } else {
+          // This is an update, append to existing data but avoid duplicates
+          // Filter out trades that are already present based on trade_id
+          const uniqueNewTrades = data.filter(newTrade =>
+            !existingTrades.some(existingTrade => existingTrade.trade_id === newTrade.trade_id)
+          );
+
+          // Append new trades to existing trades
+          newTrades = [...uniqueNewTrades, ...existingTrades];
+        }
+
+        // Sort trades by timestamp in descending order (newest first)
+        newTrades.sort((a, b) =>
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+        );
+
+        return {
+          ...prev,
+          [symbol]: newTrades
+        };
+      });
+    });
+
     // Update connection status based on WebSocket state
     const connectionInterval = setInterval(() => {
       if (globalWebSocket) {
@@ -370,6 +482,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     return () => {
       tickerUnsubscribe();
       bookUnsubscribe();
+      tradeUnsubscribe();
       clearInterval(connectionInterval);
     };
   }, []);
@@ -407,7 +520,8 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     connectionStatus,
     error,
     tickerData,
-    orderBookData
+    orderBookData,
+    tradeData
   };
 
   return (

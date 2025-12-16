@@ -43,6 +43,16 @@ export interface WebSocketOrderBookData {
   checksum: number;
 }
 
+export interface TradeData {
+  symbol: string;
+  side: 'buy' | 'sell';
+  price: number;
+  qty: number;
+  ord_type: string;
+  trade_id: number;
+  timestamp: string;
+}
+
 export interface KrakenWebSocketMessage {
   channelID?: number;
   channelName?: string;
@@ -50,4 +60,13 @@ export interface KrakenWebSocketMessage {
   pair?: string;
   data?: any;
   error?: string;
+}
+
+export interface TradeSubscriptionParams {
+  method: 'subscribe' | 'unsubscribe';
+  params: {
+    channel: 'trade';
+    symbol: string[];
+    snapshot?: boolean;
+  };
 }

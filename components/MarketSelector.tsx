@@ -9,7 +9,7 @@ interface MarketSelectorProps {
 
 const MarketSelector: React.FC<MarketSelectorProps> = ({ selectedPair, onSelectPair }) => {
   const tradingPairs = [
-    'XBT/USD',
+    'BTC/USD',
     'ETH/USD',
     'XRP/USD',
     'LTC/USD',
