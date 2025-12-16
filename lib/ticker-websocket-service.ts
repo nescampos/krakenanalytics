@@ -8,6 +8,8 @@ export interface TickerMessage {
   data: TickerData[];
 }
 
+const krakenWebSocketUrl = process.env.NEXT_PUBLIC_KRAKEN_WS_URL || 'wss://ws.kraken.com/v2';
+
 export const useTickerWebSocket = (pair: string) => {
   const [tickerData, setTickerData] = useState<TickerData | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
@@ -23,7 +25,7 @@ export const useTickerWebSocket = (pair: string) => {
         if (!shouldReconnect) return; // Don't connect if not supposed to reconnect
 
         // Using Kraken's WebSocket API for ticker data
-        ws = new WebSocket('wss://ws.kraken.com/v2');
+        ws = new WebSocket(krakenWebSocketUrl);
 
         ws.onopen = () => {
           setConnectionStatus('connected');

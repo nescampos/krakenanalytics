@@ -65,12 +65,14 @@ const tickerListeners = new Set<(data: { symbol: string; data: TickerData }) => 
 const bookListeners = new Set<(data: { symbol: string; data: OrderBookData }) => void>();
 const tradeListeners = new Set<(data: { symbol: string; data: TradeData[] }) => void>(); // Trade listeners
 
+const krakenWebSocketUrl = process.env.NEXT_PUBLIC_KRAKEN_WS_URL || 'wss://ws.kraken.com/v2';
+
 // Function to connect to WebSocket
 const connectWebSocket = () => {
   if (globalWebSocket) return; // Already connected
 
   try {
-    globalWebSocket = new WebSocket('wss://ws.kraken.com/v2');
+    globalWebSocket = new WebSocket(krakenWebSocketUrl);
 
     globalWebSocket.onopen = () => {
       // Resubscribe to all pairs when connection opens
