@@ -10,7 +10,7 @@ const Navigation: React.FC = () => {
   const navItems = [
     { name: 'Dashboard', path: '/' },
     { name: 'Order Book', path: '/orderbook' },
-    { name: 'History', path: '/history' },
+    { name: 'Comparison', path: '/comparison' },
   ];
 
   return (

@@ -67,19 +67,19 @@ const OrderBook: React.FC<OrderBookProps> = ({ pair }) => {
 
   return (
     <div className="flex flex-col h-[calc(100vh-200px)]">
-      {/* Asks (Sell orders) - highest at top */}
-      <div className="flex-1 overflow-y-auto border border-red-500 rounded-t-md">
-        <div className="grid grid-cols-3 bg-red-500 text-white text-sm uppercase font-bold p-2">
+      <h3 className="text-lg font-semibold mb-3">Current buy orders</h3>
+      <div className="flex-1 overflow-y-auto border border-green-500 rounded-b-md">
+        <div className="grid grid-cols-3 bg-green-500 text-white text-sm uppercase font-bold p-2">
           <span>Price ({pair.split('/')[1]})</span>
           <span className="text-right">Amount ({pair.split('/')[0]})</span>
           <span className="text-right">Total</span>
         </div>
         <div className="divide-y divide-gray-200 dark:divide-zinc-700">
-          {sortedAsks.map((ask, index) => (
+          {sortedBids.map((bid, index) => (
             <OrderBookRow
-              key={`ask-${ask.price}-${ask.volume}`}
-              entry={ask}
-              type="ask"
+              key={`bid-${bid.price}-${bid.volume}`}
+              entry={bid}
+              type="bid"
               maxVolume={maxVolume}
             />
           ))}
@@ -98,19 +98,18 @@ const OrderBook: React.FC<OrderBookProps> = ({ pair }) => {
         )}
       </div>
 
-      {/* Bids (Buy orders) - highest at top */}
-      <div className="flex-1 overflow-y-auto border border-green-500 rounded-b-md">
-        <div className="grid grid-cols-3 bg-green-500 text-white text-sm uppercase font-bold p-2">
+      <div className="flex-1 overflow-y-auto border border-red-500 rounded-t-md">
+        <div className="grid grid-cols-3 bg-red-500 text-white text-sm uppercase font-bold p-2">
           <span>Price ({pair.split('/')[1]})</span>
           <span className="text-right">Amount ({pair.split('/')[0]})</span>
           <span className="text-right">Total</span>
         </div>
         <div className="divide-y divide-gray-200 dark:divide-zinc-700">
-          {sortedBids.map((bid, index) => (
+          {sortedAsks.map((ask, index) => (
             <OrderBookRow
-              key={`bid-${bid.price}-${bid.volume}`}
-              entry={bid}
-              type="bid"
+              key={`ask-${ask.price}-${ask.volume}`}
+              entry={ask}
+              type="ask"
               maxVolume={maxVolume}
             />
           ))}

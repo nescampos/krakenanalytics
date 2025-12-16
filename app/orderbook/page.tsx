@@ -19,14 +19,15 @@ const OrderBookContent = ({ pair }: { pair: string }) => {
   return (
     <>
       <div className="w-full lg:w-3/4 p-4 border-r border-gray-200 dark:border-zinc-700">
+
+      <TradeDataProvider pair={pair}>
+          <TradeHistoryTable pair={pair} />
+        </TradeDataProvider>
+
         <OrderBookProvider pair={pair}>
           <OrderBook pair={pair} />
         </OrderBookProvider>
 
-        {/* Trade History Table */}
-        <TradeDataProvider pair={pair}>
-          <TradeHistoryTable pair={pair} />
-        </TradeDataProvider>
       </div>
 
       <div className="w-full lg:w-1/4 p-4 bg-gray-50 dark:bg-zinc-800">
