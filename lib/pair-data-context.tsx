@@ -2,7 +2,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { useWebSocket, subscribeToPair, unsubscribeFromPair } from '@/lib/websocket-manager';
+import { useWebSocket, subscribeToTicker, unsubscribeFromTicker } from '@/lib/websocket-manager';
 
 interface PairDataContextType {
   tickerData: any | null; // Using any for now as we'll get the data from the global context
@@ -22,12 +22,12 @@ export const PairDataProvider: React.FC<PairDataProviderProps> = ({ children, pa
   const [pairTickerData, setPairTickerData] = useState<any | null>(null);
 
   useEffect(() => {
-    // Subscribe to the pair when component mounts
-    subscribeToPair(pair);
-    
+    // Subscribe to the ticker data for the pair when component mounts
+    subscribeToTicker(pair);
+
     // Cleanup subscription when component unmounts
     return () => {
-      unsubscribeFromPair(pair);
+      unsubscribeFromTicker(pair);
     };
   }, [pair]);
 

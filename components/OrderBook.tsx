@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 import OrderBookRow from './OrderBookRow';
-import { OrderBookEntry, WebSocketOrderBookData } from '@/types/orderbook';
+import { OrderBookEntry, WebSocketOrderBookData, WebSocketOrderBookEntry } from '@/types/orderbook';
 import { useOrderBook } from '@/lib/orderbook-data-context';
 
 interface OrderBookProps {
@@ -17,13 +17,13 @@ const OrderBook: React.FC<OrderBookProps> = ({ pair }) => {
     if (!orderBookData) return null;
 
     // Convert WebSocket format to our internal format
-    const bids: OrderBookEntry[] = orderBookData.bids.map(bid => ({
+    const bids: OrderBookEntry[] = orderBookData.bids.map((bid: WebSocketOrderBookEntry) => ({
       price: bid.price,
       volume: bid.qty,
       numberOfOrders: 1 // Default to 1 since WebSocket doesn't provide this
     }));
 
-    const asks: OrderBookEntry[] = orderBookData.asks.map(ask => ({
+    const asks: OrderBookEntry[] = orderBookData.asks.map((ask: WebSocketOrderBookEntry) => ({
       price: ask.price,
       volume: ask.qty,
       numberOfOrders: 1 // Default to 1 since WebSocket doesn't provide this

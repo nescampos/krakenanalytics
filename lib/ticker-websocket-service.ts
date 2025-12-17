@@ -39,7 +39,7 @@ export const useTickerWebSocket = (pair: string) => {
               symbol: [pair]
             }
           };
-          ws.send(JSON.stringify(subscribeMessage));
+          ws?.send(JSON.stringify(subscribeMessage));
         };
 
         ws.onmessage = (event) => {

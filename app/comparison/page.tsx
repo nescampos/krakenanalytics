@@ -326,14 +326,14 @@ const ComparisonPage = () => {
                     <div className="bg-gray-100 dark:bg-zinc-700 p-3 rounded">
                       <p className="text-sm text-gray-600 dark:text-zinc-300">Spread 1</p>
                       <p className="font-mono text-lg">
-                        {(tickerData1?.ask || 0 - tickerData1?.bid || 0).toFixed(5)}
+                        {((tickerData1?.ask || 0) - (tickerData1?.bid || 0)).toFixed(5)}
                       </p>
                     </div>
 
                     <div className="bg-gray-100 dark:bg-zinc-700 p-3 rounded">
                       <p className="text-sm text-gray-600 dark:text-zinc-300">Spread 2</p>
                       <p className="font-mono text-lg">
-                        {(tickerData2?.ask || 0 - tickerData2?.bid || 0).toFixed(5)}
+                        {((tickerData2?.ask || 0) - (tickerData2?.bid || 0)).toFixed(5)}
                       </p>
                     </div>
 

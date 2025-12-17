@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import OrderBook from '@/components/OrderBook';
 import MarketSelector from '@/components/MarketSelector';
@@ -222,7 +222,8 @@ const OrderBookContent = ({ pair }: { pair: string }) => {
   );
 };
 
-const OrderBookPage = () => {
+// Component that uses client-side search params
+const OrderBookPageContent = () => {
   const searchParams = useSearchParams();
   const initialPair = searchParams?.get('pair') ?? 'XBT/USD';
 
@@ -250,6 +251,14 @@ const OrderBookPage = () => {
         </main>
       </div>
     </TickerProvider>
+  );
+};
+
+const OrderBookPage = () => {
+  return (
+    <Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading...</div>}>
+      <OrderBookPageContent />
+    </Suspense>
   );
 };
 

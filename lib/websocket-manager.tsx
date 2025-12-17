@@ -19,12 +19,12 @@ interface TickerData {
   change_pct: number;
 }
 
-interface OrderBookEntry {
+export interface OrderBookEntry {
   price: number;
   qty: number;
 }
 
-interface OrderBookData {
+export interface OrderBookData {
   symbol: string;
   bids: OrderBookEntry[];
   asks: OrderBookEntry[];
@@ -79,7 +79,7 @@ const subscribedTradePairs = new Set<string>(); // Track trade subscriptions
 const subscribedOHLCPairs = new Set<string>(); // Track OHLC subscriptions
 const tickerListeners = new Set<(data: { symbol: string; data: TickerData }) => void>();
 const bookListeners = new Set<(data: { symbol: string; data: OrderBookData }) => void>();
-const tradeListeners = new Set<(data: { symbol: string; data: TradeData[] }) => void>(); // Trade listeners
+const tradeListeners = new Set<(data: { symbol: string; data: TradeData[]; isSnapshot: boolean }) => void>(); // Trade listeners
 const ohlcListeners = new Set<(data: { symbol: string; data: OHLCData[]; isSnapshot: boolean }) => void>(); // OHLC listeners
 
 const krakenWebSocketUrl = process.env.NEXT_PUBLIC_KRAKEN_WS_URL || 'wss://ws.kraken.com/v2';
