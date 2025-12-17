@@ -2,6 +2,8 @@
 
 A real-time cryptocurrency trading data visualization application that connects to the Kraken exchange's WebSocket API to display live order book information, trading pair comparisons, and historical data analysis.
 
+- For this project, the Rest API is used to obtain the list of pairs (considering that it does not change very often), and WebSockets are used for the rest.
+
 ## Features
 
 - **Real-time Order Book Visualization**: Displays live bid/ask orders showing current market depth
