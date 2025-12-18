@@ -10,7 +10,6 @@ A real-time cryptocurrency trading data visualization application that connects 
 - **Multi-Pair Support**: Allows users to select from multiple trading pairs (e.g., ETH/USDT)
 - **Trading Pair Comparison**: Compare metrics between two different trading pairs side by side
 - **OHLC Chart Visualization**: Interactive charts with Open, High, Low, and Close data for various time intervals
-- **Historical Data Exploration**: Time travel feature to view historical order book snapshots
 - **Comprehensive Trading Pair List**: Shows all available trading pairs with search and pagination
 - **Trade History Display**: Shows real-time trade execution data
 - **Ticker Information**: Displays key metrics like last price, bid/ask, 24h change, volume, etc.
